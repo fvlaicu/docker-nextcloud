@@ -1,7 +1,7 @@
-FROM nextcloud:apache
+FROM nextcloud:23-apache
 
 RUN set -ex; \
-    \
+    mkdir -p /usr/share/man/man1;\
     apt-get update; \
     apt-get install -y --no-install-recommends \
         ffmpeg \
@@ -10,10 +10,21 @@ RUN set -ex; \
         procps \
         smbclient \
         supervisor \
-#       libreoffice \
+        libreoffice \
+        wget \
+        gnupg2 \
+        unzip \
     ; \
     rm -rf /var/lib/apt/lists/*
-
+RUN echo "deb https://repo.delellis.com.ar bullseye bullseye" > /etc/apt/sources.list.d/20-pdlib.list \
+  && wget -qO - https://repo.delellis.com.ar/repo.gpg.key | apt-key add -
+RUN apt update \
+  && apt install -y libdlib-dev
+RUN wget https://github.com/goodspb/pdlib/archive/master.zip \
+  && mkdir -p /usr/src/php/ext/ \
+  && unzip -d /usr/src/php/ext/ master.zip \
+  && rm master.zip
+RUN docker-php-ext-install pdlib-master
 RUN set -ex; \
     \
     savedAptMark="$(apt-mark showmanual)"; \
@@ -52,7 +63,7 @@ RUN mkdir -p \
     /var/log/supervisord \
     /var/run/supervisord \
 ;
-
+RUN echo memory_limit=1024M > /usr/local/etc/php/conf.d/memory-limit.ini
 COPY supervisord.conf /
 
 ENV NEXTCLOUD_UPDATE=1
