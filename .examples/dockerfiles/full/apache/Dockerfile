@@ -1,4 +1,4 @@
-FROM nextcloud:23-apache
+FROM nextcloud:24-apache
 
 RUN set -ex; \
     mkdir -p /usr/share/man/man1;\
