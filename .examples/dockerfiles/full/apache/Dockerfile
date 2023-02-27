@@ -1,4 +1,4 @@
-FROM nextcloud:24-apache
+FROM nextcloud:25-apache
 
 RUN set -ex; \
     mkdir -p /usr/share/man/man1;\
@@ -58,6 +58,9 @@ RUN set -ex; \
     \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
     rm -rf /var/lib/apt/lists/*
+
+RUN echo '*/30 * * * * php -f /var/www/html/occ face:background_job -t 900' >> /var/spool/cron/crontabs/www-data
+
 
 RUN mkdir -p \
     /var/log/supervisord \
