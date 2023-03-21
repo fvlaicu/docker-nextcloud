@@ -1,16 +1,16 @@
 # DO NOT EDIT: created by update.sh from Dockerfile-debian.template
-FROM php:8.0-apache-bullseye
+FROM php:8.1-fpm-bullseye
 
 # entrypoint.sh and cron.sh dependencies
 RUN set -ex; \
     \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        rsync \
-        bzip2 \
         busybox-static \
+        bzip2 \
         libldap-common \
         libmagickcore-6.q16-6-extra \
+        rsync \
     ; \
     rm -rf /var/lib/apt/lists/*; \
     \
@@ -30,18 +30,18 @@ RUN set -ex; \
         libcurl4-openssl-dev \
         libevent-dev \
         libfreetype6-dev \
+        libgmp-dev \
         libicu-dev \
         libjpeg-dev \
         libldap2-dev \
+        libmagickwand-dev \
         libmcrypt-dev \
         libmemcached-dev \
         libpng-dev \
         libpq-dev \
-        libxml2-dev \
-        libmagickwand-dev \
-        libzip-dev \
         libwebp-dev \
-        libgmp-dev \
+        libxml2-dev \
+        libzip-dev \
     ; \
     \
     debMultiarch="$(dpkg-architecture --query DEB_BUILD_MULTIARCH)"; \
@@ -51,27 +51,28 @@ RUN set -ex; \
         bcmath \
         exif \
         gd \
+        gmp \
         intl \
         ldap \
         opcache \
         pcntl \
         pdo_mysql \
         pdo_pgsql \
+        sysvsem \
         zip \
-        gmp \
     ; \
     \
 # pecl will claim success even if one install fails, so we need to perform each install separately
     pecl install APCu-5.1.22; \
+    pecl install imagick-3.7.0; \
     pecl install memcached-3.2.0; \
     pecl install redis-5.3.7; \
-    pecl install imagick-3.7.0; \
     \
     docker-php-ext-enable \
         apcu \
+        imagick \
         memcached \
         redis \
-        imagick \
     ; \
     rm -r /tmp/pear; \
     \
@@ -93,7 +94,7 @@ RUN set -ex; \
 # see https://docs.nextcloud.com/server/latest/admin_manual/installation/server_tuning.html#enable-php-opcache
 RUN { \
         echo 'opcache.enable=1'; \
-        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.interned_strings_buffer=32'; \
         echo 'opcache.max_accelerated_files=10000'; \
         echo 'opcache.memory_consumption=128'; \
         echo 'opcache.save_comments=1'; \
@@ -116,16 +117,8 @@ RUN { \
 
 VOLUME /var/www/html
 
-RUN a2enmod headers rewrite remoteip ;\
-    {\
-     echo RemoteIPHeader X-Real-IP ;\
-     echo RemoteIPTrustedProxy 10.0.0.0/8 ;\
-     echo RemoteIPTrustedProxy 172.16.0.0/12 ;\
-     echo RemoteIPTrustedProxy 192.168.0.0/16 ;\
-    } > /etc/apache2/conf-available/remoteip.conf;\
-    a2enconf remoteip
 
-ENV NEXTCLOUD_VERSION 23.0.12
+ENV NEXTCLOUD_VERSION 26.0.0
 
 RUN set -ex; \
     fetchDeps=" \
@@ -158,4 +151,4 @@ COPY *.sh upgrade.exclude /
 COPY config/* /usr/src/nextcloud/config/
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["apache2-foreground"]
+CMD ["php-fpm"]

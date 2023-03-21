@@ -1,12 +1,12 @@
 # DO NOT EDIT: created by update.sh from Dockerfile-alpine.template
-FROM php:8.0-fpm-alpine3.16
+FROM php:8.1-fpm-alpine3.16
 
 # entrypoint.sh and cron.sh dependencies
 RUN set -ex; \
     \
     apk add --no-cache \
-        rsync \
         imagemagick \
+        rsync \
     ; \
     \
     rm /var/spool/cron/crontabs/root; \
@@ -20,20 +20,20 @@ RUN set -ex; \
         $PHPIZE_DEPS \
         autoconf \
         freetype-dev \
+        gmp-dev \
         icu-dev \
+        imagemagick-dev \
         libevent-dev \
         libjpeg-turbo-dev \
         libmcrypt-dev \
-        libpng-dev \
         libmemcached-dev \
+        libpng-dev \
+        libwebp-dev \
         libxml2-dev \
         libzip-dev \
         openldap-dev \
         pcre-dev \
         postgresql-dev \
-        imagemagick-dev \
-        libwebp-dev \
-        gmp-dev \
     ; \
     \
     docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp; \
@@ -42,27 +42,28 @@ RUN set -ex; \
         bcmath \
         exif \
         gd \
+        gmp \
         intl \
         ldap \
         opcache \
         pcntl \
         pdo_mysql \
         pdo_pgsql \
+        sysvsem \
         zip \
-        gmp \
     ; \
     \
 # pecl will claim success even if one install fails, so we need to perform each install separately
     pecl install APCu-5.1.22; \
+    pecl install imagick-3.7.0; \
     pecl install memcached-3.2.0; \
     pecl install redis-5.3.7; \
-    pecl install imagick-3.7.0; \
     \
     docker-php-ext-enable \
         apcu \
+        imagick \
         memcached \
         redis \
-        imagick \
     ; \
     rm -r /tmp/pear; \
     \
@@ -81,7 +82,7 @@ ENV PHP_MEMORY_LIMIT 512M
 ENV PHP_UPLOAD_LIMIT 512M
 RUN { \
         echo 'opcache.enable=1'; \
-        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.interned_strings_buffer=32'; \
         echo 'opcache.max_accelerated_files=10000'; \
         echo 'opcache.memory_consumption=128'; \
         echo 'opcache.save_comments=1'; \
@@ -105,7 +106,7 @@ RUN { \
 VOLUME /var/www/html
 
 
-ENV NEXTCLOUD_VERSION 23.0.12
+ENV NEXTCLOUD_VERSION 26.0.0
 
 RUN set -ex; \
     apk add --no-cache --virtual .fetch-deps \
